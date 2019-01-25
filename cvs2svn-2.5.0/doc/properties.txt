@@ -1,0 +1,96 @@
+This file documents how file and revision properties are used in
+cvs2svn.
+
+cvs2svn allows arbitrary properties to be associated with CVSFile and
+CVSRevision instances.  These properties are combined to form the
+effective properties for each CVSRevision.  Properties set in a
+CVSRevision take precedence over properties set in the corresponding
+CVSFile.
+
+These properties can be set very flexibly by FilePropertySetter and
+RevisionPropertySetter objects, which in turn can be implemented
+arbitrarily and set via the conversion configuration file.  Several
+types of PropertySetters are already provided, and examples of there
+use are shown in the example configuration files.  The properties are
+determined early in the conversion and are retained for the duration
+of the conversion.
+
+CVSFile.properties holds properties that do not change for the life of
+the file; for example, whether keywords should be expanded in the file
+contents.
+
+CVSRevision.properties holds properties that can vary from one file
+revision to another.  The only current example of a revision property
+is the cvs2svn:rev-num property.
+
+Properties whose names start with underscore are reserved for the
+internal use of cvs2svn.
+
+The properties can be used by backends for any purpose.  Currently,
+they are used for two purposes:
+
+1. Passing RevisionReaders information about how a file revision's
+   contents should be transformed before being written to the new VCS.
+   Please note that this does not necessarily correspond to how the
+   revision contents will look after being checked out of the new VCS;
+   for example, Subversion requires keywords to be *unexpanded* in the
+   dumpfile stream if Subversion is going to expand them.  These
+   properties are:
+
+       _keyword_handling -- How should RCS keywords be handled?
+
+           'untouched' -- The keywords should be output literally as
+               they are recorded in the RCS file.  Please note that
+               this results in the keywords' being expanded the way
+               they were when the revision was checked *in* to CVS,
+               which typically reflects how CVS expanded them when the
+               *previous* revision was checked *out* of CVS.  This
+               mode is appropriate for binary files.
+
+           'collapsed' -- The keywords should be collapsed in the
+               output; e.g., "$Author: jrandom $" -> "$Author$".  This
+               mode is appropriate for output of non-binary files to
+               Subversion (because Subversion re-expands the keywords
+               itself) and might be useful for text files for other
+               VCSs if you would like this history to be "clean" of
+               keywords.
+
+           'expanded' -- The keywords should be expanded in the output
+               the same way as CVS would expand keywords when checking
+               out the revision; e.g., "$Author$" -> "$Author: jrandom
+               $".  If this value is used, keywords are expanded
+               regardless of whether CVS considers the file to be a
+               text file.  This mode might be useful for outputting
+               text files to other VCSs if you would like the content
+               of historical revisions to be as similar as possible to
+               the content as it would be checked out of CVS.
+
+           'deleted' -- The keywords and their values (and some
+               surrounding whitespace?) should be deleted entirely.
+               NOT YET IMPLEMENTED.
+
+           'replaced' -- The keywords should be deleted entirely and
+               replaced by their values; e.g., "$Author$" ->
+               "jrandom", like CVS's "-kv" option.  This is not a very
+               useful feature, but is listed for completeness.  NOT
+               YET IMPLEMENTED.
+
+       _eol_fix -- Should end-of-line sequences be made uniform before
+           committing to the target VCS?  If this property is set to a
+           non-empty value, then every end-of-line character sequence
+           ('\n', '\r\n', or '\r') is converted to the specified value
+           (which should obviously be a valid end-of-line character
+           sequence).  If this property is not set, then the
+           end-of-line character sequences are output literally as
+           they are recorded in the RCS file.
+
+2. cvs2svn: Specifying Subversion versioned properties.  Any
+   properties that do not start with an underscore are converted into
+   Subversion versioned properties on the associated file.  By this
+   mechanism, arbitrary Subversion properties can be set.  A number of
+   PropertySetters are provided to set common Subversion properties
+   such as svn:mime-type, svn:eol-style, svn:executable, and
+   svn:keywords.  Other properties can be set via the
+   AutoPropsPropertySetter or by implementing custom PropertySetters.
+
+
