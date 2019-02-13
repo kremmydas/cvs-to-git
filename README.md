@@ -1,6 +1,6 @@
-# What Is cvs2svn? 
+# What Is cvs2svn?
 
-[cvs2svn](http://cvs2svn.tigris.org/) is a free open source tool for migrating a CVS repository to Subversion, git, or Bazaar. 
+[cvs2svn](http://cvs2svn.tigris.org/) is a free open source tool for migrating a CVS repository to Subversion, git, or Bazaar.
 
 # Pre-Requisites:
 *  Directory Structure:
@@ -23,10 +23,10 @@
 
 # Run the CVS migration
 
-* Go to the folder that contains this README.md file and run the cvs_migration.sh script:
+* Go to the folder that contains this README.md file and run the ansible playbook:
 
     ```  
-    ./cvs_migration.sh
+    ansible-playbook cvs_migration.yml -v
     ```  
 
 ## Useful links:

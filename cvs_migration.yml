@@ -1,0 +1,40 @@
+#Ansible Playbook
+-
+  name: Conversion of CVS repos on local machine
+  hosts: localhost
+  tasks:
+    - name: Execute script on localhost
+      script: cvs_migration.sh
+      register: out
+    - debug:
+        var: out.stdout_lines
+
+-
+  name: Import converted repos on remote server
+  # replace hosts value with the hostname of the remote server defined
+  # in /etc/ansible/hosts on your local ansible machine
+  hosts: gitlab-private-centos
+  tasks:
+    - name: Create directory
+    #replace '/my_group/sub_group' with the nesting folder structure of CVS repository to be migrated
+    # (in this example, 'my_group' is the gitlab main group and 'sub_group' is the sub-group)
+      file: path=/var/opt/gitlab/git-data/repositories_cvs/my_group/sub_group state=directory
+    - name: Ansible copy and extract converted_repos.tar.gz
+      unarchive:
+        src: /tmp/git/converted_repos.tar.gz
+        #replace '/my_group/sub_group' with the nesting folder structure of CVS repository to be migrated
+        # (in this example, 'my_group' is the gitlab main group and 'sub_group' is the sub-group)
+        dest: /var/opt/gitlab/git-data/repositories_cvs/my_group/sub_group
+      file:
+        state: absent
+        #replace '/my_group/sub_group' with the nesting folder structure of CVS repository to be migrated
+        # (in this example, 'my_group' is the gitlab main group and 'sub_group' is the sub-group)
+        dest: /var/opt/gitlab/git-data/repositories_cvs/my_group/sub_group/converted_repos.tar.gz
+    - name: Change owner
+      file:
+        path: /var/opt/gitlab/git-data/repositories_cvs
+        owner: git
+        group: git
+        recurse: yes
+    - name: Import repositories
+      command: gitlab-rake gitlab:import:repos['/var/opt/gitlab/git-data/repositories_cvs']
